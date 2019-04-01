@@ -31,9 +31,9 @@
 
 #include "xmpp/sasl/plainmessage.h"
 #include "xmpp/sasl/digestmd5response.h"
-#include "xmpp/sasl/scramsha1response.h"
-#include "xmpp/sasl/scramsha1message.h"
-#include "xmpp/sasl/scramsha1signature.h"
+#include "xmpp/sasl/scramsharesponse.h"
+#include "xmpp/sasl/scramshamessage.h"
+#include "xmpp/sasl/scramshasignature.h"
 #include "xmpp/base/randrandomnumbergenerator.h"
 
 namespace XMPP {
@@ -143,6 +143,22 @@ public:
 
         mechanism_ = QString();
         foreach(QString mech, mechlist) {
+            if (mech == "SCRAM-SHA-512") {
+                mechanism_ = "SCRAM-SHA-512";
+                break;
+            }
+            if (mech == "SCRAM-SHA-384") {
+                mechanism_ = "SCRAM-SHA-384";
+                break;
+            }
+            if (mech == "SCRAM-SHA-256") {
+                mechanism_ = "SCRAM-SHA-256";
+                break;
+            }
+            if (mech == "SCRAM-SHA-224") {
+                mechanism_ = "SCRAM-SHA-224";
+                break;
+            }
             if (mech == "SCRAM-SHA-1") {
                 mechanism_ = "SCRAM-SHA-1";
                 break;
@@ -184,7 +200,7 @@ public:
             out_mech = mechanism_;
 
             // PLAIN
-            if (out_mech == "PLAIN" || out_mech == "SCRAM-SHA-1") {
+            if (out_mech == "PLAIN" || out_mech == "SCRAM-SHA-512" || out_mech == "SCRAM-SHA-384" || out_mech == "SCRAM-SHA-256" || out_mech == "SCRAM-SHA-224" || out_mech == "SCRAM-SHA-1") {
                 // First, check if we have everything
                 if(need.user || need.pass) {
                     qWarning("simplesasl.cpp: Did not receive necessary auth parameters");
@@ -202,9 +218,9 @@ public:
             }
             if (out_mech == "PLAIN") {
                 out_buf = PLAINMessage(authz, user, pass.toByteArray()).getValue();
-            } else if (out_mech == "SCRAM-SHA-1") {
+            } else if (out_mech == "SCRAM-SHA-512" || out_mech == "SCRAM-SHA-384" || out_mech == "SCRAM-SHA-256" || out_mech == "SCRAM-SHA-224" || out_mech == "SCRAM-SHA-1") {
                 // send client-first-message
-                SCRAMSHA1Message msg(authz, user, QByteArray(0, ' '), RandRandomNumberGenerator());
+                SCRAMSHAMessage msg(authz, user, QByteArray(0, ' '), RandRandomNumberGenerator());
                 if (msg.isValid()) {
                     out_buf = msg.getValue();
                     client_first_message = out_buf;
@@ -250,7 +266,7 @@ public:
                 out_buf = response.getValue();
                 ++step;
                 result_ = Continue;
-            } else if (out_mech == "SCRAM-SHA-1") {
+            } else if (out_mech == "SCRAM-SHA-512" || out_mech == "SCRAM-SHA-384" || out_mech == "SCRAM-SHA-256" || out_mech == "SCRAM-SHA-224" || out_mech == "SCRAM-SHA-1") {
                 // if we still need params, then the app has failed us!
                 if(need.user || need.pass) {
                     qWarning("simplesasl.cpp: Did not receive necessary auth parameters");
@@ -275,7 +291,7 @@ public:
                 if (prop.isValid()) {
                     salted_password_base64 = prop.toString();
                 }
-                SCRAMSHA1Response response(in_buf, pass.toByteArray(), client_first_message, salted_password_base64, RandRandomNumberGenerator());
+                SCRAMSHAResponse response(in_buf, pass.toByteArray(), client_first_message, salted_password_base64, RandRandomNumberGenerator());
                 if (!response.isValid()) {
                     authCondition_ = QCA::SASL::BadProtocol;
                     result_ = Error;
@@ -287,9 +303,9 @@ public:
                 ++step;
                 result_ = Continue;
             }
-        } else if (step == 2 && out_mech == "SCRAM-SHA-1") {
-            // verify the server's response on success, for SCRAM-SHA-1
-            SCRAMSHA1Signature sig(in_buf, server_signature);
+        } else if (step == 2 && (out_mech == "SCRAM-SHA-512" || out_mech == "SCRAM-SHA-384" || out_mech == "SCRAM-SHA-256" || out_mech == "SCRAM-SHA-224" || out_mech == "SCRAM-SHA-1")) {
+            // verify the server's response on success, for SCRAM-SHA-512 or SCRAM-SHA-384 or SCRAM-SHA-256 or SCRAM-SHA-224 or SCRAM-SHA-1
+            SCRAMSHASignature sig(in_buf, server_signature);
             if (sig.isValid()) {
                 result_ = Success;
             } else {

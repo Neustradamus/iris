@@ -61,9 +61,9 @@ set(HEADERS
     sasl/digestmd5proplist.h
     sasl/digestmd5response.h
     sasl/plainmessage.h
-    sasl/scramsha1message.h
-    sasl/scramsha1response.h
-    sasl/scramsha1signature.h
+    sasl/scramshamessage.h
+    sasl/scramsharesponse.h
+    sasl/scramshasignature.h
 
     blake2/blake2qt.h
     blake2/blake2.h
@@ -141,9 +141,9 @@ set(SOURCES
     sasl/digestmd5proplist.cpp
     sasl/digestmd5response.cpp
     sasl/plainmessage.cpp
-    sasl/scramsha1message.cpp
-    sasl/scramsha1response.cpp
-    sasl/scramsha1signature.cpp
+    sasl/scramshamessage.cpp
+    sasl/scramsharesponse.cpp
+    sasl/scramshasignature.cpp
 
     xmpp-core/securestream.cpp
     xmpp-core/simplesasl.cpp
