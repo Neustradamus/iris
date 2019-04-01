@@ -218,9 +218,53 @@ public:
             }
             if (out_mech == "PLAIN") {
                 out_buf = PLAINMessage(authz, user, pass.toByteArray()).getValue();
-            } else if (out_mech == "SCRAM-SHA-512" || out_mech == "SCRAM-SHA-384" || out_mech == "SCRAM-SHA-256" || out_mech == "SCRAM-SHA-224" || out_mech == "SCRAM-SHA-1") {
+            } else if (out_mech == "SCRAM-SHA-512") {
                 // send client-first-message
-                SCRAMSHAMessage msg(authz, user, QByteArray(0, ' '), RandRandomNumberGenerator());
+                SCRAMSHA512Message msg(authz, user, QByteArray(0, ' '), RandRandomNumberGenerator());
+                if (msg.isValid()) {
+                    out_buf = msg.getValue();
+                    client_first_message = out_buf;
+                } else {
+                    qWarning("simplesasl.cpp: SASLprep failed.");
+                    result_ = Error;
+                    goto ready;
+                }
+            } else if (out_mech == "SCRAM-SHA-384" ) {
+                // send client-first-message
+                SCRAMSHA384Message msg(authz, user, QByteArray(0, ' '), RandRandomNumberGenerator());
+                if (msg.isValid()) {
+                    out_buf = msg.getValue();
+                    client_first_message = out_buf;
+                } else {
+                    qWarning("simplesasl.cpp: SASLprep failed.");
+                    result_ = Error;
+                    goto ready;
+                }
+            } else if (out_mech == "SCRAM-SHA-256") {
+                // send client-first-message
+                SCRAMSHA256Message msg(authz, user, QByteArray(0, ' '), RandRandomNumberGenerator());
+                if (msg.isValid()) {
+                    out_buf = msg.getValue();
+                    client_first_message = out_buf;
+                } else {
+                    qWarning("simplesasl.cpp: SASLprep failed.");
+                    result_ = Error;
+                    goto ready;
+                }
+            } else if (out_mech == "SCRAM-SHA-224") {
+                // send client-first-message
+                SCRAMSHA224Message msg(authz, user, QByteArray(0, ' '), RandRandomNumberGenerator());
+                if (msg.isValid()) {
+                    out_buf = msg.getValue();
+                    client_first_message = out_buf;
+                } else {
+                    qWarning("simplesasl.cpp: SASLprep failed.");
+                    result_ = Error;
+                    goto ready;
+                }
+            } else if (out_mech == "SCRAM-SHA-1") {
+                // send client-first-message
+                SCRAMSHA1Message msg(authz, user, QByteArray(0, ' '), RandRandomNumberGenerator());
                 if (msg.isValid()) {
                     out_buf = msg.getValue();
                     client_first_message = out_buf;
@@ -266,7 +310,7 @@ public:
                 out_buf = response.getValue();
                 ++step;
                 result_ = Continue;
-            } else if (out_mech == "SCRAM-SHA-512" || out_mech == "SCRAM-SHA-384" || out_mech == "SCRAM-SHA-256" || out_mech == "SCRAM-SHA-224" || out_mech == "SCRAM-SHA-1") {
+            } else if (out_mech == "SCRAM-SHA-512") {
                 // if we still need params, then the app has failed us!
                 if(need.user || need.pass) {
                     qWarning("simplesasl.cpp: Did not receive necessary auth parameters");
@@ -291,7 +335,151 @@ public:
                 if (prop.isValid()) {
                     salted_password_base64 = prop.toString();
                 }
-                SCRAMSHAResponse response(in_buf, pass.toByteArray(), client_first_message, salted_password_base64, RandRandomNumberGenerator());
+                SCRAMSHA512Response response(in_buf, pass.toByteArray(), client_first_message, salted_password_base64, RandRandomNumberGenerator());
+                if (!response.isValid()) {
+                    authCondition_ = QCA::SASL::BadProtocol;
+                    result_ = Error;
+                    goto ready;
+                }
+                setProperty("scram-salted-password-base64", QVariant(response.getSaltedPassword()));
+                server_signature = response.getServerSignature();
+                out_buf = response.getValue();
+                ++step;
+                result_ = Continue;
+            } else if (out_mech == "SCRAM-SHA-384") {
+                // if we still need params, then the app has failed us!
+                if(need.user || need.pass) {
+                    qWarning("simplesasl.cpp: Did not receive necessary auth parameters");
+                    result_ = Error;
+                    goto ready;
+                }
+
+                // see if some params are needed
+                if(!have.user)
+                    need.user = true;
+                //if(!have.authzid)
+                //    need.authzid = true;
+                if(!have.pass)
+                    need.pass = true;
+                if(need.user || need.pass) {
+                    result_ = Params;
+                    goto ready;
+                }
+                // parse server-first-message, send client-final-message
+                QVariant prop = property("scram-salted-password-base64");
+                QString salted_password_base64;
+                if (prop.isValid()) {
+                    salted_password_base64 = prop.toString();
+                }
+                SCRAMSHA384Response response(in_buf, pass.toByteArray(), client_first_message, salted_password_base64, RandRandomNumberGenerator());
+                if (!response.isValid()) {
+                    authCondition_ = QCA::SASL::BadProtocol;
+                    result_ = Error;
+                    goto ready;
+                }
+                setProperty("scram-salted-password-base64", QVariant(response.getSaltedPassword()));
+                server_signature = response.getServerSignature();
+                out_buf = response.getValue();
+                ++step;
+                result_ = Continue;
+            } else if (out_mech == "SCRAM-SHA-256") {
+                // if we still need params, then the app has failed us!
+                if(need.user || need.pass) {
+                    qWarning("simplesasl.cpp: Did not receive necessary auth parameters");
+                    result_ = Error;
+                    goto ready;
+                }
+
+                // see if some params are needed
+                if(!have.user)
+                    need.user = true;
+                //if(!have.authzid)
+                //    need.authzid = true;
+                if(!have.pass)
+                    need.pass = true;
+                if(need.user || need.pass) {
+                    result_ = Params;
+                    goto ready;
+                }
+                // parse server-first-message, send client-final-message
+                QVariant prop = property("scram-salted-password-base64");
+                QString salted_password_base64;
+                if (prop.isValid()) {
+                    salted_password_base64 = prop.toString();
+                }
+                SCRAMSHA256Response response(in_buf, pass.toByteArray(), client_first_message, salted_password_base64, RandRandomNumberGenerator());
+                if (!response.isValid()) {
+                    authCondition_ = QCA::SASL::BadProtocol;
+                    result_ = Error;
+                    goto ready;
+                }
+                setProperty("scram-salted-password-base64", QVariant(response.getSaltedPassword()));
+                server_signature = response.getServerSignature();
+                out_buf = response.getValue();
+                ++step;
+                result_ = Continue;
+            } else if (out_mech == "SCRAM-SHA-224") {
+                // if we still need params, then the app has failed us!
+                if(need.user || need.pass) {
+                    qWarning("simplesasl.cpp: Did not receive necessary auth parameters");
+                    result_ = Error;
+                    goto ready;
+                }
+
+                // see if some params are needed
+                if(!have.user)
+                    need.user = true;
+                //if(!have.authzid)
+                //    need.authzid = true;
+                if(!have.pass)
+                    need.pass = true;
+                if(need.user || need.pass) {
+                    result_ = Params;
+                    goto ready;
+                }
+                // parse server-first-message, send client-final-message
+                QVariant prop = property("scram-salted-password-base64");
+                QString salted_password_base64;
+                if (prop.isValid()) {
+                    salted_password_base64 = prop.toString();
+                }
+                SCRAMSHA224Response response(in_buf, pass.toByteArray(), client_first_message, salted_password_base64, RandRandomNumberGenerator());
+                if (!response.isValid()) {
+                    authCondition_ = QCA::SASL::BadProtocol;
+                    result_ = Error;
+                    goto ready;
+                }
+                setProperty("scram-salted-password-base64", QVariant(response.getSaltedPassword()));
+                server_signature = response.getServerSignature();
+                out_buf = response.getValue();
+                ++step;
+                result_ = Continue;
+            } else if (out_mech == "SCRAM-SHA-1") {
+                // if we still need params, then the app has failed us!
+                if(need.user || need.pass) {
+                    qWarning("simplesasl.cpp: Did not receive necessary auth parameters");
+                    result_ = Error;
+                    goto ready;
+                }
+
+                // see if some params are needed
+                if(!have.user)
+                    need.user = true;
+                //if(!have.authzid)
+                //    need.authzid = true;
+                if(!have.pass)
+                    need.pass = true;
+                if(need.user || need.pass) {
+                    result_ = Params;
+                    goto ready;
+                }
+                // parse server-first-message, send client-final-message
+                QVariant prop = property("scram-salted-password-base64");
+                QString salted_password_base64;
+                if (prop.isValid()) {
+                    salted_password_base64 = prop.toString();
+                }
+                SCRAMSHA1Response response(in_buf, pass.toByteArray(), client_first_message, salted_password_base64, RandRandomNumberGenerator());
                 if (!response.isValid()) {
                     authCondition_ = QCA::SASL::BadProtocol;
                     result_ = Error;
@@ -303,9 +491,53 @@ public:
                 ++step;
                 result_ = Continue;
             }
-        } else if (step == 2 && (out_mech == "SCRAM-SHA-512" || out_mech == "SCRAM-SHA-384" || out_mech == "SCRAM-SHA-256" || out_mech == "SCRAM-SHA-224" || out_mech == "SCRAM-SHA-1")) {
-            // verify the server's response on success, for SCRAM-SHA-512 or SCRAM-SHA-384 or SCRAM-SHA-256 or SCRAM-SHA-224 or SCRAM-SHA-1
-            SCRAMSHASignature sig(in_buf, server_signature);
+        } else if (step == 2 && (out_mech == "SCRAM-SHA-512")) {
+            // verify the server's response on success, for SCRAM-SHA-512
+            SCRAMSHA512Signature sig(in_buf, server_signature);
+            if (sig.isValid()) {
+                result_ = Success;
+            } else {
+                qWarning() << "ServerSignature doesn't match the one we've calculated.";
+                authCondition_ = QCA::SASL::AuthFail;
+                result_ = Error;
+                goto ready;
+            }
+        } else if (step == 2 && (out_mech == "SCRAM-SHA-384")) {
+            // verify the server's response on success, for SCRAM-SHA-384
+            SCRAMSHA384Signature sig(in_buf, server_signature);
+            if (sig.isValid()) {
+                result_ = Success;
+            } else {
+                qWarning() << "ServerSignature doesn't match the one we've calculated.";
+                authCondition_ = QCA::SASL::AuthFail;
+                result_ = Error;
+                goto ready;
+            }
+        } else if (step == 2 && (out_mech == "SCRAM-SHA-256")) {
+            // verify the server's response on success, for SCRAM-SHA-256
+            SCRAMSHA256Signature sig(in_buf, server_signature);
+            if (sig.isValid()) {
+                result_ = Success;
+            } else {
+                qWarning() << "ServerSignature doesn't match the one we've calculated.";
+                authCondition_ = QCA::SASL::AuthFail;
+                result_ = Error;
+                goto ready;
+            }
+        } else if (step == 2 && (out_mech == "SCRAM-SHA-224")) {
+            // verify the server's response on success, for SCRAM-SHA-224
+            SCRAMSHA224Signature sig(in_buf, server_signature);
+            if (sig.isValid()) {
+                result_ = Success;
+            } else {
+                qWarning() << "ServerSignature doesn't match the one we've calculated.";
+                authCondition_ = QCA::SASL::AuthFail;
+                result_ = Error;
+                goto ready;
+            }
+        } else if (step == 2 && (out_mech == "SCRAM-SHA-1")) {
+            // verify the server's response on success, for SCRAM-SHA-1
+            SCRAMSHA1Signature sig(in_buf, server_signature);
             if (sig.isValid()) {
                 result_ = Success;
             } else {
